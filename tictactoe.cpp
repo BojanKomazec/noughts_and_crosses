@@ -62,9 +62,54 @@ std::ostream& operator<<(std::ostream& os, const board& b)
     return os;
 }
 
+// transforms 2D board into 1D array of bits where each entry e is replaced by 1 and other entries by 0
+// e.g.
+//    x_o
+//    __x
+//    o_x
+// will be transformed to 100001001
+unsigned short int flatten(const board& b, entry e)
+{
+    unsigned short int flattened_mono_board = 0;
+    unsigned short int flag = 0b100000000;
+
+    for(auto it = b.begin(); it != b.end(); ++it)
+    {
+        if (*it == e)
+        {
+            flattened_mono_board |= flag;
+        }
+
+        flag >>= 1;
+    }
+
+    return flattened_mono_board;
+}
+
 // TODO: Implement this function correctly
 bool check_winner(const board& b, entry e)
 {
+    // winning token positions
+    static unsigned short int masks[8] =
+    {
+        0b111000000,
+        0b000111000,
+        0b000000111,
+        0b100100100,
+        0b010010010,
+        0b001001001,
+        0b100010001,
+        0b001010100
+    };
+
+    unsigned short int flattened_mono_board = flatten(b, e);
+
+    for (auto mask : masks)
+    {
+        if ((unsigned short int)(flattened_mono_board & mask) == mask)
+            return true;
+    }
+
     return false;
 }
 
@@ -73,7 +118,5 @@ bool check_draw(const board&)
 {
     return false;
 }
-
-
 
 }

@@ -5,6 +5,7 @@
 #include <array>
 #include <iosfwd>
 #include <ostream>
+#include <string>
 
 namespace tictactoe {
 
@@ -58,6 +59,9 @@ bool check_winner(const board& b, entry e);
 /// Returns true if the game has ended in a draw
 // (You must implement this function in tictactoe.cpp)
 bool check_draw(const board&);
+
+// added to public API so can be tested
+unsigned short int flatten(const board& b, entry e);
 
 }
 
