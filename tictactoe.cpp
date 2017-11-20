@@ -119,4 +119,11 @@ bool check_draw(const board&)
     return false;
 }
 
+void clear_board(board& b)
+{
+    for (size_t x = 0; x <= 2; ++x)
+        for (size_t y = 0; y <= 2; ++y)
+            b(x, y) = tictactoe::entry::empty;
+}
+
 }

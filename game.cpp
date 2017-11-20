@@ -42,13 +42,14 @@ class Player
 {
     std::string name_;
     tictactoe::entry token_;
+    unsigned int score_;
 
 public: 
     Player() :
-        name_(""), token_(tictactoe::entry::empty) {}
+        name_(""), token_(tictactoe::entry::empty), score_(0) {}
 
     Player(const std::string& name, tictactoe::entry token) :
-        name_(name), token_(token) {}
+        name_(name), token_(token), score_(0) {}
 
     const std::string& Name() const
     {
@@ -59,12 +60,56 @@ public:
     {
         return token_;
     }
+
+    unsigned int GetScore() const
+    {
+        return score_;
+    }
+
+    void AddWinnerScore()
+    {
+        score_ += 2;
+    }
+
+    void AddDrawScore()
+    {
+        score_ += 1;
+    }
 };
 
 void ObtainPlayerName(unsigned short int player_number, std::string& player_name)
 {
     std::cout << "Please enter player" << player_number << "'s name: "; 
     std::cin >> player_name;
+}
+
+bool PlayerWantsNextRound(const std::string& player_name)
+{
+    bool continue_game = false;
+
+    while (true)
+    {
+        std::cout << player_name << ", do you wish to play another game? (y/n)";
+    
+        std::string answer;
+        std::cin >> answer;
+
+        if (answer == "y" || answer == "Y")
+        {
+            continue_game = true;
+            break;
+        }
+        else if (answer == "n" || answer == "N")
+        {
+            break;
+        }
+        else
+        {
+            std::cout << "\nPlease enter 'y' or 'n'.";
+        }
+    }
+
+    return continue_game;
 }
 
 tictactoe::entry ObtainPlayerToken(const std::string& player_name)
@@ -88,13 +133,14 @@ tictactoe::entry ObtainPlayerToken(const std::string& player_name)
     }
 
     return token;
-
 }
 
 class Game
 {
     std::array<Player, 2> players_;
     tictactoe::board board_;
+    size_t starting_player_index = 0;
+
 public:
     Game()
     {
@@ -118,13 +164,14 @@ public:
 
     void Play()
     {
-        size_t index = 0;
+        size_t player_index = starting_player_index;
+        size_t cells_populated_count = 0;
 
         while (true)
         {
             int x, y;
 
-            const Player& player = players_.at(index);
+            Player& player = players_.at(player_index);
 
             while (true)
             {
@@ -142,6 +189,7 @@ public:
                     try
                     {
                         board_(x, y) = player.Token();
+                        ++cells_populated_count;
                         break;
                     }
                     catch (const std::out_of_range& exc)
@@ -153,16 +201,54 @@ public:
 
             std::cout << board_;
 
-            bool isWinningMove = tictactoe::check_winner(board_, player.Token());
-
-            if (isWinningMove)
+            if (cells_populated_count >= 5)
             {
-                std::cout << "\n" << player.Name() << " has won the game!\n";
-                break;
+                bool isWinningMove = tictactoe::check_winner(board_, player.Token());
+
+                if (isWinningMove)
+                {
+                    std::cout << "\n" << player.Name() << " has won the game!\n";
+                    player.AddWinnerScore();
+                    break;
+                }
+                else
+                {
+                    if (cells_populated_count == 9)
+                    {
+                        std::cout << "\n" << "No winner in this game...Draw!\n";
+
+                        // WARNING! use 'auto&'
+                        for (auto& player : players_)
+                        {
+                            player.AddDrawScore();
+                        }
+
+                        break;
+                    }
+                }
             }
 
-            index = 1 - index;
+            player_index = 1 - player_index;
         }
+
+        starting_player_index = 1 - starting_player_index;
+    }
+
+    void PrintCurrentScore()
+    {
+        std::cout << "\nCurrent score: " <<
+            players_[0].Name() << " : " << players_[0].GetScore() << ", " <<
+            players_[1].Name() << " : " << players_[1].GetScore() << "\n";
+    }
+
+    bool PlayersWantNextRound()
+    {
+        return PlayerWantsNextRound(players_[0].Name()) && PlayerWantsNextRound(players_[1].Name());
+    }
+
+    void ClearBoard()
+    {
+        clear_board(board_);
     }
 };
 
@@ -173,9 +259,23 @@ int main()
 #endif
 
     Game game;
-    game.Play();
 
-    std::cout << "\nPress ENTER to quit...";
+    while (true)
+    {
+        game.Play();
+        game.PrintCurrentScore();
+
+        if (game.PlayersWantNextRound())
+        {
+            game.ClearBoard();
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    std::cout << "\nGame over! Press ENTER to quit...";
     std::cin.ignore();
     std::cin.get();
 }

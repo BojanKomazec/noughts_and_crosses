@@ -63,6 +63,8 @@ bool check_draw(const board&);
 // added to public API so can be tested
 unsigned short int flatten(const board& b, entry e);
 
+void clear_board(board& b);
+
 }
 
 
